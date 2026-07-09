@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAIZEN - Inventory Management System</title>
+    
+    <!-- Supabase Client SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="sidebar-logo" onclick="navigateTo('dashboard')">
+                    <div class="logo-icon">K</div>
+                    <span>KAIZEN</span>
+                </a>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" data-page="dashboard" class="active">
+                    <span class="nav-icon">📊</span>
+                    <span data-key="dashboard">Dashboard</span>
+                </a>
+                <a href="#" data-page="inventory-in">
+                    <span class="nav-icon">📥</span>
+                    <span data-key="inventoryIn">Inventory In</span>
+                </a>
+                <a href="#" data-page="inventory-out">
+                    <span class="nav-icon">📤</span>
+                    <span data-key="inventoryOut">Inventory Out</span>
+                </a>
+                <a href="#" data-page="products">
+                    <span class="nav-icon">📦</span>
+                    <span data-key="products">Products</span>
+                </a>
+                <a href="#" data-page="operations">
+                    <span class="nav-icon">📋</span>
+                    <span data-key="operations">Operations History</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <p>© 2025 Kaizen Systems</p>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+                    <h1 class="page-title" id="pageTitle">Dashboard</h1>
+                </div>
+                
+                <div class="topbar-right">
+                    <div class="lang-switch">
+                        <button class="lang-btn active" data-lang="en" onclick="switchLanguage('en')">EN</button>
+                        <button class="lang-btn" data-lang="ar" onclick="switchLanguage('ar')">العربية</button>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Content Area -->
+            <div class="content-area" id="contentArea"></div>
+        </main>
+    </div>
+    
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <span>Loading...</span>
+    </div>
+    
+    <!-- Single App Script -->
+    <script src="app.js"></script>
+</body>
+</html>
