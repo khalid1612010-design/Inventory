@@ -132,7 +132,10 @@ const translations = {
         totalReturnValue: 'Total Return Value',
         dailyTransactions: 'Daily Transactions',
         noReportData: 'No transactions for this day',
-        returnOperation: 'Return Operation'
+        returnOperation: 'Return Operation',
+        addSupplier: 'Add Supplier',
+        supplierSearchPlaceholder: 'Search or add supplier...',
+        supplierAdded: 'Supplier added to list'
     },
     ar: {
         appName: 'كايزن',
@@ -248,7 +251,10 @@ const translations = {
         totalReturnValue: 'إجمالي قيمة المرتجعات',
         dailyTransactions: 'حركات اليوم',
         noReportData: 'لا توجد حركات في هذا اليوم',
-        returnOperation: 'عملية مرتجع'
+        returnOperation: 'عملية مرتجع',
+        addSupplier: 'إضافة مورد',
+        supplierSearchPlaceholder: 'ابحث أو أضف مورد...',
+        supplierAdded: 'تمت إضافة المورد للقائمة'
     }
 };
 
@@ -272,6 +278,19 @@ const EMPLOYEES = [
     { ar: 'رحمة', en: 'empRahma' }
 ];
 
+const DEFAULT_SUPPLIERS = [
+    "2M GROUP (Bags)", "EL Fath Offset Press", "AL-ASIM (For advertising and promotion)", "Al Younes Bags", "(PVC) Eagles International", "INSILATION - تركيبات", "Bartek Egypt (bags-Offset Printing)", "Markable Advertising Agency (Acrylic cutting)", "TRUST PACK (For paper cups)", "G STARS (INK)",
+    "Mohammed Sukkar (Giveaway)", "ASMAA (pin)", "ABDALLAH LED", "adam", "Al Ahmady - Flask & mug", "(كابات الاسماعيلية) AL REHAM", "Al Shikh Omar Press (Daftr)", "علي - بكر خيط", "Al-Noor Factory for Paper Bags", "Alwan (indoor - outdoor - banner - vnyil)",
+    "Amr Afify", "az", "AZ Raizen", "Azz (Double-sided tape)", "AZZAB GIVEAWAY", "Beacon", "BEEHIVE SUNSHADE", "big print", "Bisho offset press", "BLACK BOX WEP SITE", "Blue wear", "chess", "Cover design UV", "curella (bags)", "De Belly - Wallets", "Digital Valley", "Dokan", "طباعه - Dorma", "DOT PRINT",
+    "EL-azazy (pvc cut)", "el barbary", "El Manal (PVC sheet transparent Card)", "ENGAZ", "EVENT GIFT", "Faris (Flasks)", "Fayoumy Tread", "FINE FRAMES", "FUTURE ELECTRONICS", "GAMAL QOTB", "GEM Plast", "GO ADS", "golden finger", "Gulf Media", "Hady Hard Cover", "hassan booth", "INCREASE", "INK SYSTEM UV PARTS", "intention",
+    "Interni", "invimedia", "JONISTA", "Kaian Agency", "Kaizen Adv. 22", "LEADER", "Leader Al Salam Tissue Factory", "Mahmoud Lasser", "Mas", "Max Innovats (Roll-up)", "Media 21", "Media Town", "MERA dtf uv", "MINTRA", "mobaco", "Mohamed Awn Digital", "NEXT (NOTEBOOK)", "NOR GROUP", "Paper Trading (Mohamed Ramdan)",
+    "petra tech", "Platinum Giveaways", "Print Ex", "Print Excel", "print gate", "PRINTO PRESS", "Promo Star", "PSG", "R.N WUALITY", "S&A Samir w Ali", "Sapry Flags", "sigma fit", "Silk screen", "soul", "speed print", "Spero Acrylic", "Stamp - Mohamed Ali", "STF", "Stylish - Giveaways supplier", "tent factory",
+    "TOP LAISER", "TRANFORMA", "Transfer Digital (moaman DTF & UV DTF)", "Trophy House", "universal", "UV ink Walid", "الجناينى Vest & helmet", "WE DESIGN", "ZERO TIME", "ZUNION", "ابو غزالة اشرف برسوم (اظرف + ورق)", "احمد صلاح trophy", "اسلام المنشاوي علب قطيفة", "الازهرى", "الجمهورية", "الربع للدروع", "الرحمة للبلاستيك", "الرفاعي ابو النمرس", "الريادة",
+    "السنى", "الشاعر لتجارة الورق", "الشيماء", "الصياد", "الصيني", "العربية للشاشات", "الفا ستورز السحار رائد في مجال الادوات المكتب", "الفجالة", "القراصنة (اعلام)", "المطبعجي (اعلام)", "النمر", "اليسر للملابس الجاهزة", "ان برومو للاستيراد والتوريدات", "انترناشيونال دروع", "اولاد سعودي (للتجارة والاستيراد)", "ايمن جفر", "بدوى", "بلانكا للاعلان", "بولا",
+    "بيت الرياضة", "تكنو برنت", "جراند ايفنت", "جورج زكريا تطريز", "جولدن برنت", "خالد اقلام و هدايا", "دار الحريري للطباعه", "شركة ابو النصر", "شركة اريج", "شركة الاصدقاء", "شركة المدمر", "شركة بترا باك للكوبيات", "شركة برج العرب", "شركة يوتيرن للدعاية والاعلان", "طارق عشماوى شنط", "عبد الله ديوس", "عبدالله الفرماوى", "فتحى ديابيس", "كايزن",
+    "كرياتيف ساين", "لاتشي", "ليزر برو", "ليزر هاوس", "ليون", "مؤسسة الشروق", "محسن الفيومي للصناعة والتجارة", "محمد مجدى تركيب", "مصنع الاجندات المحلى", "مصنع كوين للتطريز (جروج)", "مطبعة الحسين", "مطبعة عدلى", "مكتبة العهد الجديد", "مكتبة فارس", "نجا اوم للملابس الجاهزة", "هاشم ختم", "هانيمكس استيراد - تصدير - توكيلات تجارية", "هاي سينس", "وليد فليكس تريد"
+];
+
 function getEmployeeOptions(selected = '') {
     const defaultOption = `<option value="">${t('selectEmployee')}</option>`;
     return defaultOption + EMPLOYEES.map(emp => {
@@ -279,6 +298,78 @@ function getEmployeeOptions(selected = '') {
         const isSelected = emp.ar === selected || label === selected ? 'selected' : '';
         return `<option value="${emp.ar}" ${isSelected}>${label}</option>`;
     }).join('');
+}
+
+function getCustomSuppliers() {
+    try {
+        return JSON.parse(localStorage.getItem('kaizen_custom_suppliers') || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveCustomSupplier(name) {
+    const clean = String(name || '').trim();
+    if (!clean) return;
+    const current = getCustomSuppliers();
+    if (!current.some(s => s.toLowerCase() === clean.toLowerCase())) {
+        current.push(clean);
+        localStorage.setItem('kaizen_custom_suppliers', JSON.stringify(current));
+    }
+}
+
+function getAllSuppliers() {
+    const productSuppliers = (AppState.products || [])
+        .map(p => p.supplier_name)
+        .filter(Boolean);
+    const merged = [...DEFAULT_SUPPLIERS, ...getCustomSuppliers(), ...productSuppliers];
+    return [...new Map(merged.map(s => [String(s).trim().toLowerCase(), String(s).trim()])).values()]
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'ar'));
+}
+
+function renderSupplierPicker(inputId, value = '') {
+    return `
+        <div class="supplier-picker" style="position:relative;display:flex;gap:0.45rem;align-items:center;">
+            <div style="position:relative;flex:1;">
+                <span style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--text-muted);z-index:2;">🔎</span>
+                <input type="text" class="form-input" id="${inputId}" value="${escapeHtml(value || '')}" placeholder="${t('supplierSearchPlaceholder')}" autocomplete="off" style="padding-left:2.25rem;" onfocus="showSupplierSuggestions('${inputId}')" oninput="showSupplierSuggestions('${inputId}')">
+                <div id="${inputId}Suggestions" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 0.35rem);background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);max-height:220px;overflow:auto;z-index:2500;"></div>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="addSupplierFromInput('${inputId}')" title="${t('addSupplier')}" style="height:42px;min-width:42px;font-size:1rem;">+</button>
+        </div>
+    `;
+}
+
+function showSupplierSuggestions(inputId) {
+    const input = document.getElementById(inputId);
+    const box = document.getElementById(inputId + 'Suggestions');
+    if (!input || !box) return;
+    const query = input.value.trim().toLowerCase();
+    const items = getAllSuppliers()
+        .filter(name => !query || name.toLowerCase().includes(query))
+        .slice(0, 12);
+    box.innerHTML = items.length
+        ? items.map(name => `<button type="button" onclick="selectSupplier('${inputId}', '${escapeHtml(name).replace(/'/g, "\\'")}')" style="display:block;width:100%;text-align:start;padding:0.65rem 0.85rem;border:0;background:#fff;cursor:pointer;border-bottom:1px solid #f1f5f9;font-family:inherit;color:var(--text-primary);">${escapeHtml(name)}</button>`).join('')
+        : `<button type="button" onclick="addSupplierFromInput('${inputId}')" style="display:block;width:100%;text-align:start;padding:0.65rem 0.85rem;border:0;background:#fffbeb;cursor:pointer;font-family:inherit;color:#92400e;">+ ${t('addSupplier')}: ${escapeHtml(input.value)}</button>`;
+    box.style.display = 'block';
+}
+
+function selectSupplier(inputId, supplierName) {
+    const input = document.getElementById(inputId);
+    const box = document.getElementById(inputId + 'Suggestions');
+    if (input) input.value = supplierName;
+    if (box) box.style.display = 'none';
+}
+
+function addSupplierFromInput(inputId) {
+    const input = document.getElementById(inputId);
+    const box = document.getElementById(inputId + 'Suggestions');
+    const name = input?.value.trim();
+    if (!name) return;
+    saveCustomSupplier(name);
+    if (box) box.style.display = 'none';
+    showToast(t('supplierAdded'), 'success');
 }
 
 // ============================================================
@@ -590,7 +681,7 @@ function renderInventoryInForm() {
                     </div>
                     <div class="form-group">
                         <label class="form-label">${t('supplierName')}</label>
-                        <input type="text" class="form-input" id="inSupplierName" placeholder="${t('supplierName')}">
+                        ${renderSupplierPicker('inSupplierName')}
                     </div>
                     <div class="form-group">
                         <label class="form-label">${t('entryDate')}</label>
@@ -974,7 +1065,7 @@ function openEditModal(name, currentQty, currentPrice, currentSupplier, id) {
             </div>
             <div class="form-group" style="margin-bottom:1.25rem;">
                 <label class="form-label">${t('supplierName')}</label>
-                <input type="text" class="form-input" id="editSupplierInput" value="${escapeHtml(currentSupplier || '')}" placeholder="${t('supplierName')}">
+                ${renderSupplierPicker('editSupplierInput', currentSupplier || '')}
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-outline" onclick="closeCustomModal()">${t('cancel')}</button>
@@ -1848,6 +1939,13 @@ function initApp() {
     document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
     document.getElementById('customModalOverlay')?.addEventListener('click', (e) => {
         if (e.target.id === 'customModalOverlay') closeCustomModal();
+    });
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.supplier-picker')) {
+            document.querySelectorAll('[id$="Suggestions"]').forEach(box => {
+                if (box.id.includes('Supplier')) box.style.display = 'none';
+            });
+        }
     });
     if (window.initializeDatabase) window.initializeDatabase();
     renderPage('dashboard');
