@@ -178,10 +178,13 @@ var ProductsAPI = window.ProductsAPI = {
         }
     },
 
-    async updateQuantity(name, quantityDelta, unitPrice = null, supplierName = '', productCode = '') {
+    async updateQuantity(name, quantityDelta, unitPrice = null, supplierName = '', productCode = '', imageUrl = '') {
         try {
             if (productCode && window.KaizenCodes) {
                 window.KaizenCodes.set(name, productCode);
+            }
+            if (imageUrl && window.KaizenImages) {
+                window.KaizenImages.set(name, imageUrl);
             }
             const client = getSupabase();
             if (!client) return { name, quantity: quantityDelta, unit_price: unitPrice || 0 };
@@ -196,10 +199,13 @@ var ProductsAPI = window.ProductsAPI = {
                 if (unitPrice !== null && !isNaN(unitPrice) && unitPrice > 0) updateData.unit_price = unitPrice;
                 if (supplierName) updateData.supplier_name = supplierName;
                 if (productCode) updateData.product_code = productCode;
+                if (imageUrl) updateData.image_url = imageUrl;
 
                 let { data, error } = await client.from('products').update(updateData).eq('id', existing.id).select();
                 if (error) {
                     delete updateData.updated_at;
+                    if (String(error.message || '').includes('image_url')) delete updateData.image_url;
+                    if (String(error.message || '').includes('product_code')) delete updateData.product_code;
                     ({ data, error } = await client.from('products').update(updateData).eq('id', existing.id).select());
                 }
                 if (error || !data || data.length === 0) {
@@ -219,6 +225,7 @@ var ProductsAPI = window.ProductsAPI = {
                     unit_price: price,
                     supplier_name: supplierName || '',
                     product_code: productCode || '',
+                    image_url: imageUrl || '',
                     updated_at: new Date().toISOString()
                 }).select();
                 
@@ -228,16 +235,19 @@ var ProductsAPI = window.ProductsAPI = {
                         name: name,
                         quantity: qty,
                         unit_price: price,
-                        supplier_name: supplierName || ''
+                        supplier_name: supplierName || '',
+                        product_code: productCode || '',
+                        image_url: imageUrl || ''
                     }).select();
                 }
                 
-                // Step 3: without supplier_name
+                // Step 3: without cloud-only optional columns
                 if (res.error) {
                     res = await client.from('products').insert({
                         name: name,
                         quantity: qty,
-                        unit_price: price
+                        unit_price: price,
+                        supplier_name: supplierName || ''
                     }).select();
                 }
                 

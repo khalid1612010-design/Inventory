@@ -102,6 +102,7 @@ const translations = {
         productImage: 'Product Image',
         imageUrlPlaceholder: 'Or paste image link/URL here...',
         imageHint: 'You can upload a photo from your device or paste an image link.',
+        uploadProductImage: 'Upload Product Image',
         productCode: 'Product Code',
         codePlaceholder: 'Type product code here...',
         returns: 'Returns',
@@ -221,6 +222,7 @@ const translations = {
         productImage: 'صورة المنتج',
         imageUrlPlaceholder: 'أو ضع رابط الصورة على الإنترنت هنا...',
         imageHint: 'يمكنك اختيار أو التقاط صورة من جهازك، أو وضع رابط صورة مباشر.',
+        uploadProductImage: 'إضافة صورة المنتج',
         productCode: 'كود المنتج',
         codePlaceholder: 'اكتب كود المنتج هنا...',
         returns: 'المرتجعات',
@@ -670,6 +672,19 @@ function renderInventoryInForm() {
                         <label class="form-label">${t('quantity')} <span class="required">*</span></label>
                         <input type="number" class="form-input" id="inQuantity" required min="0.01" step="0.01" placeholder="0" oninput="calcInTotalPrice()">
                     </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">${t('uploadProductImage')}</label>
+                        <div style="display:flex;align-items:center;gap:1rem;margin-top:0.35rem;">
+                            <div id="inImagePreview" style="width:72px;height:72px;border-radius:10px;background:#f8fafc;border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:2rem;">
+                                📦
+                            </div>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:0.45rem;">
+                                <input type="file" id="inImageFile" accept="image/*" class="form-input" style="padding:0.4rem;font-size:0.85rem;" onchange="previewInventoryInImage(event)">
+                                <input type="hidden" id="inProductImageBase64" value="">
+                                <span class="form-hint">${t('imageHint')}</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label class="form-label">${t('unitPrice')}</label>
                         <input type="number" class="form-input" id="inUnitPrice" min="0" step="0.01" placeholder="0.00" oninput="calcInTotalPrice()">
@@ -726,6 +741,49 @@ function calcInUnitPrice() {
     if (q > 0 && tp > 0) document.getElementById('inUnitPrice').value = (tp / q).toFixed(2);
 }
 
+function compressImageFile(file, callback) {
+    if (!file || !callback) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX_SIZE = 500;
+            let width = img.width;
+            let height = img.height;
+            if (width > height) {
+                if (width > MAX_SIZE) {
+                    height = Math.round(height * (MAX_SIZE / width));
+                    width = MAX_SIZE;
+                }
+            } else if (height > MAX_SIZE) {
+                width = Math.round(width * (MAX_SIZE / height));
+                height = MAX_SIZE;
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            callback(canvas.toDataURL('image/jpeg', 0.75));
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function previewInventoryInImage(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    compressImageFile(file, (dataUrl) => {
+        const hiddenInput = document.getElementById('inProductImageBase64');
+        const previewDiv = document.getElementById('inImagePreview');
+        if (hiddenInput) hiddenInput.value = dataUrl;
+        if (previewDiv) {
+            previewDiv.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='📦'"/>`;
+        }
+    });
+}
+
 async function handleInventoryInSubmit(event) {
     event.preventDefault();
     try {
@@ -746,14 +804,17 @@ async function handleInventoryInSubmit(event) {
             notes: document.getElementById('inNotes').value.trim()
         };
         const code = document.getElementById('inProductCode')?.value.trim() || '';
+        const imageUrl = document.getElementById('inProductImageBase64')?.value || '';
         if (!record.product_name || isNaN(record.quantity) || record.quantity <= 0) {
             hideLoading(); return;
         }
-        if (getProductsAPI()) await getProductsAPI().updateQuantity(record.product_name, record.quantity, record.unit_price, record.supplier_name, code);
+        if (getProductsAPI()) await getProductsAPI().updateQuantity(record.product_name, record.quantity, record.unit_price, record.supplier_name, code, imageUrl);
         if (getInventoryInAPI()) await getInventoryInAPI().add(record);
         showToast(t('recordAdded'), 'success');
         document.getElementById('inventoryInForm').reset();
         document.getElementById('inEntryDate').value = getTodayDate();
+        const preview = document.getElementById('inImagePreview');
+        if (preview) preview.innerHTML = '📦';
         if (getProductsAPI()) AppState.products = await getProductsAPI().getAll();
         updateProductSuggestions();
     } catch (err) {
@@ -1081,43 +1142,16 @@ function openEditModal(name, currentQty, currentPrice, currentSupplier, id) {
 function previewSelectedImage(event) {
     const file = event.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const MAX_SIZE = 500;
-            let width = img.width;
-            let height = img.height;
-            if (width > height) {
-                if (width > MAX_SIZE) {
-                    height = Math.round(height * (MAX_SIZE / width));
-                    width = MAX_SIZE;
-                }
-            } else {
-                if (height > MAX_SIZE) {
-                    width = Math.round(width * (MAX_SIZE / height));
-                    height = MAX_SIZE;
-                }
-            }
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
-
-            const hiddenInput = document.getElementById('editImageBase64');
-            const previewDiv = document.getElementById('editImagePreview');
-            const urlInput = document.getElementById('editImageUrl');
-            if (hiddenInput) hiddenInput.value = dataUrl;
-            if (urlInput) urlInput.value = '';
-            if (previewDiv) {
-                previewDiv.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='📦'"/>`;
-            }
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+    compressImageFile(file, (dataUrl) => {
+        const hiddenInput = document.getElementById('editImageBase64');
+        const previewDiv = document.getElementById('editImagePreview');
+        const urlInput = document.getElementById('editImageUrl');
+        if (hiddenInput) hiddenInput.value = dataUrl;
+        if (urlInput) urlInput.value = '';
+        if (previewDiv) {
+            previewDiv.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='📦'"/>`;
+        }
+    });
 }
 
 function previewUrlImage(event) {
