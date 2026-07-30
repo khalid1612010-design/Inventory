@@ -12,6 +12,7 @@ var getInventoryInAPI = () => window.InventoryInAPI || (typeof InventoryInAPI !=
 var getInventoryOutAPI = () => window.InventoryOutAPI || (typeof InventoryOutAPI !== 'undefined' ? InventoryOutAPI : null);
 var getInventoryReturnsAPI = () => window.InventoryReturnsAPI || (typeof InventoryReturnsAPI !== 'undefined' ? InventoryReturnsAPI : null);
 var getPDFGenerator = () => window.PDFGenerator || (typeof PDFGenerator !== 'undefined' ? PDFGenerator : null);
+var deferredInstallPrompt = null;
 
 // ============================================================
 // TRANSLATIONS (Arabic & English)
@@ -1046,7 +1047,7 @@ function renderProductsTable(products) {
         <tr>
             <td>
                 <div style="display:flex;align-items:center;gap:0.75rem;">
-                    <div style="width:40px;height:40px;border-radius:8px;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:1px solid var(--border);font-size:1.25rem;">
+                    <div onclick="openProductImageModal('${escapeHtml(p.name).replace(/'/g, "\\'")}')" title="${t('viewAll')}" style="width:40px;height:40px;border-radius:8px;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:1px solid var(--border);font-size:1.25rem;cursor:pointer;transition:transform .2s ease;">
                         ${(p.image_url || (window.KaizenImages && window.KaizenImages.get(p.name))) ? `<img src="${p.image_url || window.KaizenImages.get(p.name)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='📦'"/>` : '📦'}
                     </div>
                     <strong>${escapeHtml(p.name)}</strong>
@@ -1081,6 +1082,57 @@ function filterProductsTable() {
                code.toLowerCase().includes(query);
     });
     renderProductsTable(filtered);
+}
+
+function openProductImageModal(productName) {
+    const product = AppState.products.find(p => p.name === productName);
+    if (!product) return;
+
+    const imageUrl = product.image_url || (window.KaizenImages && window.KaizenImages.get(product.name)) || '';
+    const code = product.product_code || (window.KaizenCodes && window.KaizenCodes.get(product.name)) || '-';
+    const box = document.getElementById('customModalBox');
+    const overlay = document.getElementById('customModalOverlay');
+    if (!box || !overlay) return;
+
+    box.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem;">
+            <h3 class="modal-title" style="margin:0;">📦 ${escapeHtml(product.name)}</h3>
+            <button type="button" class="btn btn-outline btn-sm" onclick="closeCustomModal()">×</button>
+        </div>
+
+        <div style="width:100%;height:min(55vh,420px);border-radius:16px;background:#f8fafc;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:1.25rem;">
+            ${imageUrl ? `<img src="${imageUrl}" style="width:100%;height:100%;object-fit:contain;background:#fff;" onerror="this.parentElement.innerHTML='<div style=\'font-size:5rem\'>📦</div>'"/>` : `<div style="font-size:5rem;">📦</div>`}
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
+            <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:0.75rem;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);font-weight:700;">${t('productCode')}</div>
+                <div style="font-weight:800;color:var(--primary);margin-top:0.2rem;">${escapeHtml(code)}</div>
+            </div>
+            <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:0.75rem;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);font-weight:700;">${t('currentQuantity')}</div>
+                <div style="font-weight:800;margin-top:0.2rem;">${formatNumber(product.quantity)}</div>
+            </div>
+            <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:0.75rem;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);font-weight:700;">${t('unitPrice')}</div>
+                <div style="font-weight:800;margin-top:0.2rem;">${formatCurrency(product.unit_price)}</div>
+            </div>
+            <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:0.75rem;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);font-weight:700;">${t('stockValue')}</div>
+                <div style="font-weight:800;margin-top:0.2rem;">${formatCurrency(parseFloat(product.quantity || 0) * parseFloat(product.unit_price || 0))}</div>
+            </div>
+            <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:0.75rem;grid-column:1/-1;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);font-weight:700;">${t('supplierName')}</div>
+                <div style="font-weight:700;margin-top:0.2rem;">${escapeHtml(product.supplier_name || '-')}</div>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="btn btn-outline" onclick="closeCustomModal()">${t('close') || 'Close'}</button>
+            <button type="button" class="btn btn-primary" onclick="closeCustomModal(); openEditModal('${escapeHtml(product.name).replace(/'/g, "\\'")}', '${product.quantity || 0}', '${product.unit_price || 0}', '${escapeHtml(product.supplier_name || '').replace(/'/g, "\\'")}', '${product.id || ''}')">✏️ ${t('editProductBtn')}</button>
+        </div>
+    `;
+    overlay.classList.add('active');
 }
 
 function openEditModal(name, currentQty, currentPrice, currentSupplier, id) {
@@ -1957,6 +2009,40 @@ async function downloadOperationPDF(id, opType) {
 }
 
 // ============================================================
+// PWA INSTALLATION
+// ============================================================
+
+function setupPWA() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {
+            // silent
+        });
+    }
+
+    window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        const btn = document.getElementById('installAppBtn');
+        if (btn) btn.style.display = 'inline-flex';
+    });
+
+    window.addEventListener('appinstalled', () => {
+        deferredInstallPrompt = null;
+        const btn = document.getElementById('installAppBtn');
+        if (btn) btn.style.display = 'none';
+    });
+}
+
+async function installPWA() {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    const btn = document.getElementById('installAppBtn');
+    if (btn) btn.style.display = 'none';
+}
+
+// ============================================================
 // INITIALIZATION
 // ============================================================
 
@@ -1982,6 +2068,7 @@ function initApp() {
         }
     });
     if (window.initializeDatabase) window.initializeDatabase();
+    setupPWA();
     renderPage('dashboard');
 }
 

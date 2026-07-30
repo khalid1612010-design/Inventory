@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAIZEN - Inventory Management System</title>
     <meta name="theme-color" content="#1e3a8a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Kaizen Inventory">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.svg">
+    <meta name="apple-mobile-web-app-title" content="KAIZEN Inventory">
+    <title>KAIZEN - Inventory Management System</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.webmanifest">
     
     <!-- Supabase Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -21,7 +22,8 @@
     <link rel="stylesheet" href="style.css">
     
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icon.svg">
 </head>
 <body>
     <div class="app-container">
@@ -85,6 +87,9 @@
                 </div>
                 
                 <div class="topbar-right">
+                    <button class="btn btn-outline btn-sm" id="installAppBtn" style="display:none;" onclick="installPWA()">
+                        ⬇ Install
+                    </button>
                     <!-- Language Switcher -->
                     <div class="lang-switch">
                         <button class="lang-btn active" data-lang="en" onclick="switchLanguage('en')">EN</button>
@@ -118,12 +123,5 @@
     <script src="supabase.js"></script>
     <script src="pdf.js"></script>
     <script src="app.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(() => {});
-            });
-        }
-    </script>
 </body>
 </html>
