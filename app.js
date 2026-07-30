@@ -125,6 +125,8 @@ const translations = {
         dailyReport: 'Daily Report',
         reportDate: 'Report Date',
         exportDailyReport: 'Download Daily PDF',
+        exportProductsReport: 'Download Full Products Report PDF',
+        fullProductsReport: 'Full Products Report',
         dailyReportSummary: 'Daily Report Summary',
         totalInQty: 'Total In Quantity',
         totalOutQty: 'Total Out Quantity',
@@ -245,6 +247,8 @@ const translations = {
         dailyReport: 'التقرير اليومي',
         reportDate: 'تاريخ التقرير',
         exportDailyReport: 'تحميل تقرير اليوم PDF',
+        exportProductsReport: 'تحميل تقرير المنتجات PDF',
+        fullProductsReport: 'تقرير جميع المنتجات',
         dailyReportSummary: 'ملخص التقرير اليومي',
         totalInQty: 'إجمالي كميات الإدخال',
         totalOutQty: 'إجمالي كميات الإخراج',
@@ -997,6 +1001,7 @@ function renderProductsPage() {
                 <h3 class="table-title">📦 ${t('products')}</h3>
                 <div class="table-filters">
                     <input type="text" class="form-input" id="productSearch" placeholder="${t('search')}" oninput="filterProductsTable()">
+                    <button class="btn btn-primary btn-sm" onclick="downloadFullProductsReport()">📄 ${t('exportProductsReport')}</button>
                 </div>
             </div>
             <div class="table-wrap">
@@ -1082,6 +1087,104 @@ function filterProductsTable() {
                code.toLowerCase().includes(query);
     });
     renderProductsTable(filtered);
+}
+
+async function downloadFullProductsReport() {
+    try {
+        showLoading();
+        const products = AppState.products && AppState.products.length
+            ? AppState.products
+            : (getProductsAPI() ? await getProductsAPI().getAll() : []);
+        if (!products.length) {
+            hideLoading();
+            return;
+        }
+        const dir = AppState.currentLang === 'ar' ? 'rtl' : 'ltr';
+        const fontFamily = dir === 'rtl' ? "'Segoe UI', Tahoma, Arial, sans-serif" : "Inter, 'Segoe UI', Arial, sans-serif";
+
+        const rows = products.map((p, i) => {
+            const code = p.product_code || (window.KaizenCodes && window.KaizenCodes.get(p.name)) || '-';
+            const stockValue = (parseFloat(p.quantity || 0) * parseFloat(p.unit_price || 0)).toFixed(2);
+            return `
+                <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+                    <td style="padding:10px 12px;border:1px solid #e2e8f0;font-weight:700;">${i + 1}</td>
+                    <td style="padding:10px 12px;border:1px solid #e2e8f0;font-weight:600;">${escapeHtml(p.name)}</td>
+                    <td style="padding:10px 12px;border:1px solid #e2e8f0;font-family:monospace;font-weight:600;color:#1e3a8a;">${escapeHtml(code)}</td>
+                    <td style="padding:10px 12px;border:1px solid #e2e8f0;text-align:center;font-weight:700;">${parseFloat(p.quantity || 0).toLocaleString()}</td>
+                    <td style="padding:10px 12px;border:1px solid #e2e8f0;text-align:${dir === 'rtl' ? 'right' : 'left'};">${parseFloat(p.unit_price || 0).toFixed(2)}</td>
+                    <td style="padding:10px 12px;border:1px solid #e2e8f0;text-align:${dir === 'rtl' ? 'right' : 'left'};font-weight:700;color:#16a34a;">${stockValue}</td>
+                    <td style="padding:10px 12px;border:1px solid #e2e8f0;">${escapeHtml(p.supplier_name || '-')}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const totalQty = products.reduce((s, p) => s + parseFloat(p.quantity || 0), 0);
+        const totalVal = products.reduce((s, p) => s + (parseFloat(p.quantity || 0) * parseFloat(p.unit_price || 0)), 0);
+
+        const htmlContent = `
+            <div style="direction:${dir};font-family:${fontFamily};padding:20px;color:#1e293b;">
+                <div style="text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #1e3a8a;">
+                    <div style="font-size:28px;font-weight:900;color:#1e3a8a;letter-spacing:2px;">KAIZEN</div>
+                    <div style="font-size:16px;color:#64748b;margin-top:4px;">${t('fullProductsReport')}</div>
+                    <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${new Date().toLocaleDateString(AppState.currentLang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
+                    <div style="background:#dbeafe;border:1px solid #bfdbfe;border-radius:10px;padding:14px;text-align:center;">
+                        <div style="font-size:11px;color:#3b82f6;font-weight:700;">${t('totalProducts')}</div>
+                        <div style="font-size:22px;font-weight:900;color:#1e3a8a;margin-top:4px;">${products.length}</div>
+                    </div>
+                    <div style="background:#dcfce7;border:1px solid #bbf7d0;border-radius:10px;padding:14px;text-align:center;">
+                        <div style="font-size:11px;color:#16a34a;font-weight:700;">${t('totalQuantity')}</div>
+                        <div style="font-size:22px;font-weight:900;color:#166534;margin-top:4px;">${totalQty.toLocaleString()}</div>
+                    </div>
+                    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:14px;text-align:center;">
+                        <div style="font-size:11px;color:#d97706;font-weight:700;">${t('totalValue')}</div>
+                        <div style="font-size:22px;font-weight:900;color:#92400e;margin-top:4px;">${totalVal.toFixed(2)} ${t('currencySymbol')}</div>
+                    </div>
+                </div>
+
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead>
+                        <tr style="background:#1e3a8a;color:#fff;">
+                            <th style="padding:11px 12px;border:1px solid #1e3a8a;text-align:center;width:40px;">#</th>
+                            <th style="padding:11px 12px;border:1px solid #1e3a8a;text-align:${dir === 'rtl' ? 'right' : 'left'};">${t('productName')}</th>
+                            <th style="padding:11px 12px;border:1px solid #1e3a8a;text-align:center;">${t('productCode')}</th>
+                            <th style="padding:11px 12px;border:1px solid #1e3a8a;text-align:center;">${t('currentQuantity')}</th>
+                            <th style="padding:11px 12px;border:1px solid #1e3a8a;text-align:${dir === 'rtl' ? 'right' : 'left'};">${t('unitPrice')}</th>
+                            <th style="padding:11px 12px;border:1px solid #1e3a8a;text-align:${dir === 'rtl' ? 'right' : 'left'};">${t('stockValue')}</th>
+                            <th style="padding:11px 12px;border:1px solid #1e3a8a;text-align:${dir === 'rtl' ? 'right' : 'left'};">${t('supplierName')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows || `<tr><td colspan="7" style="padding:30px;text-align:center;color:#94a3b8;">${t('noProducts')}</td></tr>`}
+                    </tbody>
+                </table>
+
+                <div style="margin-top:20px;padding-top:12px;border-top:1px solid #e2e8f0;text-align:center;font-size:10px;color:#94a3b8;">
+                    ${t('generatedByKaizen')} | ${t('generatedOn')}: ${new Date().toLocaleString()}
+                </div>
+            </div>
+        `;
+
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            hideLoading();
+            return;
+        }
+
+        printWindow.document.write('<!DOCTYPE html><html lang="' + AppState.currentLang + '" dir="' + dir + '"><head><meta charset="UTF-8"><title>Kaizen Products Report</title>');
+        printWindow.document.write('<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:' + fontFamily + ';color:#1e293b;padding:30px;direction:' + dir + '}@media print{body{padding:15px}}</style>');
+        printWindow.document.write('</head><body>');
+        printWindow.document.write(htmlContent);
+        printWindow.document.write('<script>setTimeout(function(){window.print()},600)<\/script>');
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        hideLoading();
+
+    } catch (err) {
+        hideLoading();
+    }
 }
 
 function openProductImageModal(productName) {
