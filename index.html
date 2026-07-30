@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KAIZEN - Inventory Management System</title>
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Kaizen Inventory">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.svg">
     
     <!-- Supabase Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -112,5 +118,12 @@
     <script src="supabase.js"></script>
     <script src="pdf.js"></script>
     <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
+    </script>
 </body>
 </html>
