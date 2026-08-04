@@ -7,8 +7,7 @@ const APP_SHELL = [
   './supabase.js',
   './pdf.js',
   './manifest.webmanifest',
-  './icon.svg',
-  './maskable-icon.svg'
+  './logo.svg'
 ];
 
 self.addEventListener('install', (event) => {

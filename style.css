@@ -123,7 +123,7 @@ body[dir="rtl"] .sidebar-nav a {
 .sidebar-logo .logo-icon {
     width: 40px;
     height: 40px;
-    background: var(--accent);
+    background: #ffffff;
     border-radius: var(--radius);
     display: flex;
     align-items: center;
@@ -131,6 +131,7 @@ body[dir="rtl"] .sidebar-nav a {
     font-size: 1.25rem;
     color: #1e3a8a;
     font-weight: 900;
+    padding: 3px;
 }
 
 .sidebar-logo span {

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Outer rounded border -->
+  <rect x="30" y="30" width="452" height="452" rx="70" ry="70" fill="none" stroke="#F5A623" stroke-width="22" transform="rotate(-8, 256, 256)"/>
+  <rect x="48" y="48" width="416" height="416" rx="58" ry="58" fill="none" stroke="#F5A623" stroke-width="12" transform="rotate(-8, 256, 256)"/>
+  
+  <!-- K letter - dark blue -->
+  <path d="M115 115 L195 115 L195 230 L295 115 L385 115 L260 255 L290 255 L195 370 L195 410 L115 410 Z" fill="#1B4F8A"/>
+  
+  <!-- Z letter - golden yellow -->
+  <path d="M230 165 L415 165 L415 225 L310 330 L415 330 L415 410 L220 410 L220 350 L335 225 L230 225 Z" fill="#F5A623"/>
+  
+  <!-- Connection dots -->
+  <circle cx="255" cy="210" r="12" fill="#ffffff" stroke="#1B4F8A" stroke-width="3"/>
+  <circle cx="300" cy="255" r="12" fill="#ffffff" stroke="#1B4F8A" stroke-width="3"/>
+  <circle cx="255" cy="300" r="12" fill="#ffffff" stroke="#1B4F8A" stroke-width="3"/>
+  <circle cx="210" cy="255" r="12" fill="#ffffff" stroke="#1B4F8A" stroke-width="3"/>
+  <circle cx="255" cy="255" r="8" fill="#ffffff" stroke="#1B4F8A" stroke-width="2"/>
+  
+  <!-- Connection lines between dots -->
+  <line x1="255" y1="210" x2="300" y2="255" stroke="#1B4F8A" stroke-width="2.5"/>
+  <line x1="300" y1="255" x2="255" y2="300" stroke="#1B4F8A" stroke-width="2.5"/>
+  <line x1="255" y1="300" x2="210" y2="255" stroke="#1B4F8A" stroke-width="2.5"/>
+  <line x1="210" y1="255" x2="255" y2="210" stroke="#1B4F8A" stroke-width="2.5"/>
+</svg>
