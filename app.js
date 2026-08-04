@@ -139,7 +139,17 @@ const translations = {
         returnOperation: 'Return Operation',
         addSupplier: 'Add Supplier',
         supplierSearchPlaceholder: 'Search or add supplier...',
-        supplierAdded: 'Supplier added to list'
+        supplierAdded: 'Supplier added to list',
+        productReport: 'Single Product Report',
+        selectProductReport: 'Select product to view report...',
+        periodReport: 'Period Report',
+        fromDate: 'From Date',
+        toDate: 'To Date',
+        showReport: 'Show Report',
+        printReport: 'Print Report',
+        productHistory: 'Product Movement History',
+        periodTransactions: 'Period Transactions',
+        noMovements: 'No movements found for this product'
     },
     ar: {
         appName: 'كايزن',
@@ -261,7 +271,17 @@ const translations = {
         returnOperation: 'عملية مرتجع',
         addSupplier: 'إضافة مورد',
         supplierSearchPlaceholder: 'ابحث أو أضف مورد...',
-        supplierAdded: 'تمت إضافة المورد للقائمة'
+        supplierAdded: 'تمت إضافة المورد للقائمة',
+        productReport: 'تقرير منتج واحد',
+        selectProductReport: 'اختر المنتج لعرض تقريره...',
+        periodReport: 'تقرير فترة محددة',
+        fromDate: 'من تاريخ',
+        toDate: 'إلى تاريخ',
+        showReport: 'عرض التقرير',
+        printReport: 'طباعة التقرير',
+        productHistory: 'سجل حركة المنتج',
+        periodTransactions: 'حركات الفترة',
+        noMovements: 'لا توجد حركات لهذا المنتج'
     }
 };
 
@@ -1745,6 +1765,85 @@ function renderDailyReportPage() {
                 </table>
             </div>
         </div>
+
+        <!-- SINGLE PRODUCT REPORT -->
+        <div class="form-card" style="margin-top:1.5rem;">
+            <h2 class="form-card-title">📦 ${t('productReport')}</h2>
+            <div class="form-grid" style="align-items:end;">
+                <div class="form-group">
+                    <label class="form-label">${t('productName')}</label>
+                    <select class="form-select" id="singleProductSelect" onchange="loadSingleProductReport()">
+                        <option value="">${t('selectProductReport')}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary btn-lg" onclick="printSingleProductReport()">🖨️ ${t('printReport')}</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-container" id="singleProductReportContainer" style="display:none;margin-top:0.75rem;">
+            <div class="table-header">
+                <h3 class="table-title" id="singleProductReportTitle">📦 ${t('productHistory')}</h3>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>${t('type')}</th>
+                            <th>${t('quantity')}</th>
+                            <th>${t('totalPrice')}</th>
+                            <th>${t('customerName')} / ${t('supplierName')}</th>
+                            <th>${t('date')}</th>
+                            <th>${t('employeeName')}</th>
+                            <th>${t('notes')}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="singleProductReportBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PERIOD REPORT -->
+        <div class="form-card" style="margin-top:1.5rem;">
+            <h2 class="form-card-title">📅 ${t('periodReport')}</h2>
+            <div class="form-grid" style="align-items:end;">
+                <div class="form-group">
+                    <label class="form-label">${t('fromDate')}</label>
+                    <input type="date" class="form-input" id="periodFromDate" value="${getTodayDate()}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">${t('toDate')}</label>
+                    <input type="date" class="form-input" id="periodToDate" value="${getTodayDate()}">
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-success btn-lg" onclick="loadPeriodReport()">${t('showReport')}</button>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary btn-lg" onclick="printPeriodReport()">🖨️ ${t('printReport')}</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-container" id="periodReportContainer" style="display:none;margin-top:0.75rem;">
+            <div class="table-header">
+                <h3 class="table-title" id="periodReportTitle">📅 ${t('periodTransactions')}</h3>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>${t('type')}</th>
+                            <th>${t('productName')}</th>
+                            <th>${t('quantity')}</th>
+                            <th>${t('totalPrice')}</th>
+                            <th>${t('customerName')} / ${t('supplierName')}</th>
+                            <th>${t('date')}</th>
+                            <th>${t('employeeName')}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="periodReportBody"></tbody>
+                </table>
+            </div>
+        </div>
     `;
 }
 
@@ -1819,6 +1918,14 @@ async function loadDailyReportData() {
         AppState.dailyReportItems = items;
         renderDailyReportTable(items);
         renderDailyReportStats(items);
+
+        // Populate single product select
+        const productSelect = document.getElementById('singleProductSelect');
+        if (productSelect) {
+            const allProducts = getProductsAPI() ? await getProductsAPI().getAll() : [];
+            productSelect.innerHTML = `<option value="">${t('selectProductReport')}</option>` +
+                allProducts.map(p => `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('');
+        }
     } catch (err) {
         // silent
     } finally {
@@ -1863,6 +1970,254 @@ function renderDailyReportTable(items) {
             <td>${escapeHtml(item.notes || '-')}</td>
         </tr>
     `).join('');
+}
+
+// ============================================================
+// SINGLE PRODUCT REPORT
+// ============================================================
+
+async function loadSingleProductReport() {
+    const productName = document.getElementById('singleProductSelect')?.value;
+    const container = document.getElementById('singleProductReportContainer');
+    const tbody = document.getElementById('singleProductReportBody');
+    const titleEl = document.getElementById('singleProductReportTitle');
+    if (!productName || !container || !tbody) { if (container) container.style.display = 'none'; return; }
+
+    try {
+        showLoading();
+        const [inRecords, outRecords, returnRecords] = await Promise.all([
+            getInventoryInAPI() ? getInventoryInAPI().getAll() : [],
+            getInventoryOutAPI() ? getInventoryOutAPI().getAll() : [],
+            getInventoryReturnsAPI() ? getInventoryReturnsAPI().getAll() : []
+        ]);
+
+        const label = (type) => {
+            if (type === 'in') return `<span class="badge badge-in">📥 ${t('in')}</span>`;
+            if (type === 'out') return `<span class="badge badge-out">📤 ${t('out')}</span>`;
+            return `<span class="badge badge-return">🔁 ${t('returnType')}</span>`;
+        };
+
+        const items = [
+            ...inRecords.filter(r => r.product_name === productName).map(r => ({
+                type: 'in', quantity: r.quantity, value: r.total_price || (r.quantity * r.unit_price) || 0,
+                contact: r.supplier_name || '-', date: r.entry_date || r.created_at,
+                employee_name: r.employee_name || '-', notes: r.notes || '-'
+            })),
+            ...outRecords.filter(r => r.product_name === productName).map(r => ({
+                type: 'out', quantity: r.quantity, value: r.total_selling_price || 0,
+                contact: r.customer_name || '-', date: r.date || r.created_at,
+                employee_name: r.employee_name || '-', notes: r.notes || '-'
+            })),
+            ...returnRecords.filter(r => r.product_name === productName).map(r => ({
+                type: 'return', quantity: r.quantity, value: 0,
+                contact: r.customer_name || '-', date: r.date || r.created_at,
+                employee_name: r.employee_name || '-', notes: r.notes || '-'
+            }))
+        ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+        if (titleEl) titleEl.textContent = '📦 ' + t('productHistory') + ': ' + productName;
+        container.style.display = 'block';
+
+        if (!items.length) {
+            tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><p>${t('noMovements')}</p></td></tr>`;
+        } else {
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>${label(item.type)}</td>
+                    <td>${item.type === 'return' ? '+' : ''}${formatNumber(item.quantity)}</td>
+                    <td>${formatCurrency(item.value)}</td>
+                    <td>${escapeHtml(item.contact)}</td>
+                    <td>${formatDate(item.date)}</td>
+                    <td>${escapeHtml(item.employee_name)}</td>
+                    <td>${escapeHtml(item.notes)}</td>
+                </tr>
+            `).join('');
+        }
+
+        AppState._singleProductData = { name: productName, items: items };
+    } catch (err) { /* silent */ }
+    finally { hideLoading(); }
+}
+
+function printSingleProductReport() {
+    const data = AppState._singleProductData;
+    if (!data || !data.items) return;
+    const dir = AppState.currentLang === 'ar' ? 'rtl' : 'ltr';
+    const fontFamily = dir === 'rtl' ? "'Segoe UI', Tahoma, Arial, sans-serif" : "Inter, 'Segoe UI', Arial, sans-serif";
+
+    const totalIn = data.items.filter(i => i.type === 'in').reduce((s, i) => s + parseFloat(i.quantity || 0), 0);
+    const totalOut = data.items.filter(i => i.type === 'out').reduce((s, i) => s + parseFloat(i.quantity || 0), 0);
+    const totalReturn = data.items.filter(i => i.type === 'return').reduce((s, i) => s + parseFloat(i.quantity || 0), 0);
+
+    const rows = data.items.map((item, i) => {
+        const typeText = item.type === 'in' ? t('in') : item.type === 'out' ? t('out') : t('returnType');
+        const color = item.type === 'in' ? '#16a34a' : item.type === 'out' ? '#dc2626' : '#d97706';
+        return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'};">
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;color:${color};font-weight:700;">${typeText}</td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;font-weight:700;">${item.type === 'return' ? '+' : ''}${parseFloat(item.quantity || 0)}</td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;">${parseFloat(item.value || 0).toFixed(2)}</td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;">${escapeHtml(item.contact)}</td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;">${formatDate(item.date)}</td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;">${escapeHtml(item.employee_name)}</td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;">${escapeHtml(item.notes)}</td>
+        </tr>`;
+    }).join('');
+
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(`<!DOCTYPE html><html lang="${AppState.currentLang}" dir="${dir}"><head><meta charset="UTF-8"><title>${data.name} Report</title>
+    <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:${fontFamily};color:#1e293b;padding:30px;direction:${dir}}@media print{body{padding:15px}}</style></head><body>
+    <div style="text-align:center;margin-bottom:20px;border-bottom:3px solid #1e3a8a;padding-bottom:12px;">
+        <div style="font-size:26px;font-weight:900;color:#1e3a8a;">KAIZEN</div>
+        <div style="font-size:15px;color:#64748b;margin-top:4px;">${t('productHistory')}: ${escapeHtml(data.name)}</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">${new Date().toLocaleDateString()}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;font-size:13px;">
+        <div style="background:#dcfce7;border-radius:8px;padding:12px;text-align:center;"><div style="color:#16a34a;font-weight:700;">${t('totalInQty')}</div><div style="font-size:20px;font-weight:900;color:#166534;">${totalIn}</div></div>
+        <div style="background:#fee2e2;border-radius:8px;padding:12px;text-align:center;"><div style="color:#dc2626;font-weight:700;">${t('totalOutQty')}</div><div style="font-size:20px;font-weight:900;color:#991b1b;">${totalOut}</div></div>
+        <div style="background:#fef3c7;border-radius:8px;padding:12px;text-align:center;"><div style="color:#d97706;font-weight:700;">${t('totalReturnQty')}</div><div style="font-size:20px;font-weight:900;color:#92400e;">${totalReturn}</div></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <thead><tr style="background:#1e3a8a;color:#fff;">
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('type')}</th>
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('quantity')}</th>
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('totalPrice')}</th>
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('customerName')}/${t('supplierName')}</th>
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('date')}</th>
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('employeeName')}</th>
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('notes')}</th>
+        </tr></thead><tbody>${rows || `<tr><td colspan="7" style="text-align:center;padding:20px;">${t('noMovements')}</td></tr>`}</tbody>
+    </table>
+    <div style="margin-top:16px;text-align:center;font-size:9px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:8px;">${t('generatedByKaizen')}</div>
+    <script>setTimeout(function(){window.print()},500)<\/script></body></html>`);
+    w.document.close();
+}
+
+// ============================================================
+// PERIOD REPORT
+// ============================================================
+
+async function loadPeriodReport() {
+    const fromDate = document.getElementById('periodFromDate')?.value;
+    const toDate = document.getElementById('periodToDate')?.value;
+    const container = document.getElementById('periodReportContainer');
+    const tbody = document.getElementById('periodReportBody');
+    const titleEl = document.getElementById('periodReportTitle');
+    if (!fromDate || !toDate || !container || !tbody) return;
+
+    try {
+        showLoading();
+        const [inRecords, outRecords, returnRecords] = await Promise.all([
+            getInventoryInAPI() ? getInventoryInAPI().getAll() : [],
+            getInventoryOutAPI() ? getInventoryOutAPI().getAll() : [],
+            getInventoryReturnsAPI() ? getInventoryReturnsAPI().getAll() : []
+        ]);
+
+        const inRange = (dateVal) => {
+            if (!dateVal) return false;
+            const d = String(dateVal).split('T')[0];
+            return d >= fromDate && d <= toDate;
+        };
+
+        const label = (type) => {
+            if (type === 'in') return `<span class="badge badge-in">📥 ${t('in')}</span>`;
+            if (type === 'out') return `<span class="badge badge-out">📤 ${t('out')}</span>`;
+            return `<span class="badge badge-return">🔁 ${t('returnType')}</span>`;
+        };
+
+        const items = [
+            ...inRecords.filter(r => inRange(r.entry_date || r.created_at) && !(r.notes && String(r.notes).includes('[RETURN]'))).map(r => ({
+                type: 'in', product_name: r.product_name, quantity: r.quantity, value: r.total_price || (r.quantity * r.unit_price) || 0,
+                contact: r.supplier_name || '-', date: r.entry_date || r.created_at, employee_name: r.employee_name || '-'
+            })),
+            ...outRecords.filter(r => inRange(r.date || r.created_at)).map(r => ({
+                type: 'out', product_name: r.product_name, quantity: r.quantity, value: r.total_selling_price || 0,
+                contact: r.customer_name || '-', date: r.date || r.created_at, employee_name: r.employee_name || '-'
+            })),
+            ...returnRecords.filter(r => inRange(r.date || r.created_at)).map(r => ({
+                type: 'return', product_name: r.product_name, quantity: r.quantity, value: 0,
+                contact: r.customer_name || '-', date: r.date || r.created_at, employee_name: r.employee_name || '-'
+            }))
+        ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+        if (titleEl) titleEl.textContent = '📅 ' + t('periodTransactions') + ': ' + fromDate + ' → ' + toDate;
+        container.style.display = 'block';
+
+        if (!items.length) {
+            tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><p>${t('noReportData')}</p></td></tr>`;
+        } else {
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>${label(item.type)}</td>
+                    <td><strong>${escapeHtml(item.product_name)}</strong></td>
+                    <td>${item.type === 'return' ? '+' : ''}${formatNumber(item.quantity)}</td>
+                    <td>${formatCurrency(item.value)}</td>
+                    <td>${escapeHtml(item.contact)}</td>
+                    <td>${formatDate(item.date)}</td>
+                    <td>${escapeHtml(item.employee_name)}</td>
+                </tr>
+            `).join('');
+        }
+
+        AppState._periodData = { from: fromDate, to: toDate, items: items };
+    } catch (err) { /* silent */ }
+    finally { hideLoading(); }
+}
+
+function printPeriodReport() {
+    const data = AppState._periodData;
+    if (!data || !data.items) return;
+    const dir = AppState.currentLang === 'ar' ? 'rtl' : 'ltr';
+    const fontFamily = dir === 'rtl' ? "'Segoe UI', Tahoma, Arial, sans-serif" : "Inter, 'Segoe UI', Arial, sans-serif";
+
+    const totalIn = data.items.filter(i => i.type === 'in').reduce((s, i) => s + parseFloat(i.quantity || 0), 0);
+    const totalOut = data.items.filter(i => i.type === 'out').reduce((s, i) => s + parseFloat(i.quantity || 0), 0);
+    const totalReturn = data.items.filter(i => i.type === 'return').reduce((s, i) => s + parseFloat(i.quantity || 0), 0);
+    const totalInVal = data.items.filter(i => i.type === 'in').reduce((s, i) => s + parseFloat(i.value || 0), 0);
+    const totalOutVal = data.items.filter(i => i.type === 'out').reduce((s, i) => s + parseFloat(i.value || 0), 0);
+
+    const rows = data.items.map((item, i) => {
+        const typeText = item.type === 'in' ? t('in') : item.type === 'out' ? t('out') : t('returnType');
+        const color = item.type === 'in' ? '#16a34a' : item.type === 'out' ? '#dc2626' : '#d97706';
+        return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'};">
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;color:${color};font-weight:700;">${typeText}</td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;font-weight:600;">${escapeHtml(item.product_name)}</td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;font-weight:700;">${item.type === 'return' ? '+' : ''}${parseFloat(item.quantity || 0)}</td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;">${parseFloat(item.value || 0).toFixed(2)}</td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;">${escapeHtml(item.contact)}</td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;">${formatDate(item.date)}</td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;">${escapeHtml(item.employee_name)}</td>
+        </tr>`;
+    }).join('');
+
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(`<!DOCTYPE html><html lang="${AppState.currentLang}" dir="${dir}"><head><meta charset="UTF-8"><title>Period Report</title>
+    <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:${fontFamily};color:#1e293b;padding:30px;direction:${dir}}@media print{body{padding:15px}}</style></head><body>
+    <div style="text-align:center;margin-bottom:20px;border-bottom:3px solid #1e3a8a;padding-bottom:12px;">
+        <div style="font-size:26px;font-weight:900;color:#1e3a8a;">KAIZEN</div>
+        <div style="font-size:15px;color:#64748b;margin-top:4px;">${t('periodReport')}: ${data.from} → ${data.to}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;font-size:13px;">
+        <div style="background:#dcfce7;border-radius:8px;padding:12px;text-align:center;"><div style="color:#16a34a;font-weight:700;">${t('totalInQty')}</div><div style="font-size:20px;font-weight:900;color:#166534;">${totalIn} <span style="font-size:11px;">(${totalInVal.toFixed(2)} ${t('currencySymbol')})</span></div></div>
+        <div style="background:#fee2e2;border-radius:8px;padding:12px;text-align:center;"><div style="color:#dc2626;font-weight:700;">${t('totalOutQty')}</div><div style="font-size:20px;font-weight:900;color:#991b1b;">${totalOut} <span style="font-size:11px;">(${totalOutVal.toFixed(2)} ${t('currencySymbol')})</span></div></div>
+        <div style="background:#fef3c7;border-radius:8px;padding:12px;text-align:center;"><div style="color:#d97706;font-weight:700;">${t('totalReturnQty')}</div><div style="font-size:20px;font-weight:900;color:#92400e;">${totalReturn}</div></div>
+    </div>
+    <div style="text-align:center;margin-bottom:16px;font-size:12px;font-weight:700;color:#64748b;">${t('dailyTransactions')}: ${data.items.length}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <thead><tr style="background:#1e3a8a;color:#fff;">
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('type')}</th>
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('productName')}</th>
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('quantity')}</th>
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('totalPrice')}</th>
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('customerName')}/${t('supplierName')}</th>
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('date')}</th>
+            <th style="padding:9px;border:1px solid #1e3a8a;">${t('employeeName')}</th>
+        </tr></thead><tbody>${rows || `<tr><td colspan="7" style="text-align:center;padding:20px;">${t('noReportData')}</td></tr>`}</tbody>
+    </table>
+    <div style="margin-top:16px;text-align:center;font-size:9px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:8px;">${t('generatedByKaizen')}</div>
+    <script>setTimeout(function(){window.print()},500)<\/script></body></html>`);
+    w.document.close();
 }
 
 function downloadDailyReportPDF() {
