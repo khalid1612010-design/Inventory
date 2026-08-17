@@ -1816,6 +1816,15 @@ function renderDailyReportPage() {
                     <input type="date" class="form-input" id="periodToDate" value="${getTodayDate()}">
                 </div>
                 <div class="form-group">
+                    <label class="form-label">${t('type')}</label>
+                    <select class="form-select" id="periodTypeFilter">
+                        <option value="all">${t('all')}</option>
+                        <option value="in">📥 ${t('in')}</option>
+                        <option value="out">📤 ${t('out')}</option>
+                        <option value="return">🔁 ${t('returnType')}</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <button class="btn btn-success btn-lg" onclick="loadPeriodReport()">${t('showReport')}</button>
                 </div>
                 <div class="form-group">
@@ -2100,6 +2109,7 @@ function printSingleProductReport() {
 async function loadPeriodReport() {
     const fromDate = document.getElementById('periodFromDate')?.value;
     const toDate = document.getElementById('periodToDate')?.value;
+    const typeFilter = document.getElementById('periodTypeFilter')?.value || 'all';
     const container = document.getElementById('periodReportContainer');
     const tbody = document.getElementById('periodReportBody');
     const titleEl = document.getElementById('periodReportTitle');
@@ -2125,7 +2135,7 @@ async function loadPeriodReport() {
             return `<span class="badge badge-return">🔁 ${t('returnType')}</span>`;
         };
 
-        const items = [
+        const allItems = [
             ...inRecords.filter(r => inRange(r.entry_date || r.created_at) && !(r.notes && String(r.notes).includes('[RETURN]'))).map(r => ({
                 type: 'in', product_name: r.product_name, quantity: r.quantity, value: r.total_price || (r.quantity * r.unit_price) || 0,
                 contact: r.supplier_name || '-', date: r.entry_date || r.created_at, employee_name: r.employee_name || '-'
@@ -2140,7 +2150,10 @@ async function loadPeriodReport() {
             }))
         ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
-        if (titleEl) titleEl.textContent = '📅 ' + t('periodTransactions') + ': ' + fromDate + ' → ' + toDate;
+        const items = typeFilter === 'all' ? allItems : allItems.filter(i => i.type === typeFilter);
+
+        const typeLabel = typeFilter === 'all' ? t('all') : typeFilter === 'in' ? t('in') : typeFilter === 'out' ? t('out') : t('returnType');
+        if (titleEl) titleEl.textContent = '📅 ' + t('periodTransactions') + ': ' + fromDate + ' → ' + toDate + ' (' + typeLabel + ')';
         container.style.display = 'block';
 
         if (!items.length) {
